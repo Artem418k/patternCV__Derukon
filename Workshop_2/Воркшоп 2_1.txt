@@ -1,0 +1,122 @@
+# Завдання 1
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+
+# Отримуємо HTML-код сторінки
+response = requests.get("https://uk.wikipedia.org/wiki/%D0%9D%D0%B0%D1%81%D0%B5%D0%BB%D0%B5%D0%BD%D0%BD%D1%8F_%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D0%B8#%D0%9D%D0%B0%D1%80%D0%BE%D0%B4%D0%B6%D1%83%D0%B2%D0%B0%D0%BD%D1%96%D1%81%D1%82%D1%8C")
+html_content = response.content
+
+# Створюємо об'єкт BeautifulSoup
+soup = BeautifulSoup(html_content, "html.parser")
+
+# Знаходимо всі таблиці на сторінці
+tables = soup.find_all("table", {"class": "wikitable"})
+
+# Вибираємо потрібну таблицю (під номером 6) та отримуємо її рядки
+rows = tables[6].find_all("tr")
+
+# Створюємо порожній список для збереження рядків таблиці
+table_data = []
+
+# Перебираємо рядки таблиці, обробляємо дані та зберігаємо їх у список
+for row in rows:
+    # Отримуємо всі комірки в поточному рядку
+    cells = row.find_all(["th", "td"])
+    
+    # Перетворюємо текст кожної комірки, виправляючи числа
+    row_data = []
+    for cell in cells:
+        if cell.text.strip() == "—":
+            row_data.append(cell.text.strip())
+        else:
+            # Виправляємо числа, зсуваючи кому вліво на одне значення
+            row_data.append(cell.text.strip().replace(",", ".", 1))
+
+    # Додаємо оброблений рядок до загального списку даних
+    table_data.append(row_data)
+
+# Створюємо DataFrame з обробленими даними
+df = pd.DataFrame(table_data[1:], columns=table_data[0])
+
+# Виводимо зчитану таблицю для перевірки
+print(df)
+
+# Завдання 2
+print(df.head())
+
+# Завдання 3
+print("Кількість рядків і стовпців у датафреймі:", df.shape)
+
+# Завдання 4
+# Створюємо DataFrame з обробленими даними
+df = pd.DataFrame(table_data[1:], columns=table_data[0])
+
+# Збереження назв регіонів перед заміною "—" на NaN
+regions = df["Регіон"]
+
+# Заміна "—" на NaN
+df.replace("—", float("NaN"), inplace=True)
+
+# Повернення назв регіонів
+df["Регіон"] = regions
+
+# Завдання 5
+print("Типи всіх стовпців:")
+df["Регіон"] = regions
+print(df.dtypes)
+
+# Завдання 6
+non_numeric_columns = df.columns[df.dtypes == object]
+df[non_numeric_columns] = df[non_numeric_columns].apply(pd.to_numeric, errors='coerce')
+
+# Завдання 7
+df["Регіон"] = regions
+missing_values_ratio = df.isnull().sum() / len(df)
+print("Частка пропусків в кожній колонці:")
+print(missing_values_ratio)
+
+# Завдання 8
+df.drop(df.tail(1).index, inplace=True)
+regions.drop(regions.tail(1).index, inplace=True)
+
+# Завдання 9
+# Заміна відсутніх значень середніми
+non_numeric_columns = df.columns[df.dtypes == object]
+numeric_columns = df.columns[df.dtypes != object]
+
+# Заміна відсутніх значень середніми для числових стовпців
+df[numeric_columns] = df[numeric_columns].apply(pd.to_numeric, errors='coerce')
+
+# Заміна відсутніх значень середніми для нечислових стовпців
+df.fillna(df[numeric_columns].mean(), inplace=True)
+
+# Завдання 10
+# Отримання регіонів з вищим рівнем народжуваності в 2019 році
+df["Регіон"] = regions
+regions_above_avg = df[df['2019'] > df['2019'].mean()]['Регіон']
+print("Регіони з вищим рівнем народжуваності в 2019 році:")
+print(regions_above_avg)
+
+# Завдання 11
+# Знайдемо регіон з найвищою народжуваністю в 2014 році
+df["Регіон"] = regions
+region_highest_birthrate_2014 = df[df['2014'] == df['2014'].max()]['Регіон'].iloc[0]
+print("Регіон з найвищою народжуваністю в 2014 році:", region_highest_birthrate_2014)
+
+# Завдання 12
+import matplotlib.pyplot as plt
+
+# Відфільтруємо дані для побудови діаграми
+data_for_plot = df[['Регіон', '2019']].copy()
+
+# Видалимо рядок з даними по всій країні
+data_for_plot = data_for_plot.drop(data_for_plot[data_for_plot['Регіон'] == 'Україна'].index)
+
+# Побудова стовбчастої діаграми
+data_for_plot.plot(kind='bar', x='Регіон', y='2019', figsize=(12, 6), legend=False)
+plt.title('Народжуваність по регіонах в 2019 році')
+plt.xlabel('Регіон')
+plt.ylabel('Народжуваність')
+plt.xticks(rotation=90)
+plt.show()

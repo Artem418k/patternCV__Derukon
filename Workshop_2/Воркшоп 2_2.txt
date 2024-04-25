@@ -1,0 +1,72 @@
+import pandas as pd
+
+# Завдання 1: Прочитати файл 2017_jun_final.csv за допомогою методу read_csv
+df = pd.read_csv('2017_jun_final.csv')
+
+# Завдання 2: Прочитати отриману таблицю, використовуючи метод head
+print("Перші 5 рядків таблиці:")
+print(df.head())
+
+# Завдання 3: Визначити розмір таблиці за допомогою методу shape
+print("\nРозмір таблиці:", df.shape)
+
+# Завдання 4: Визначити типи всіх стовпців за допомогою dataframe.dtypes
+print("\nТипи всіх стовпців:")
+print(df.dtypes)
+
+# Завдання 5: Порахуйте, яка частка пропусків міститься в кожній колонці
+missing_values_ratio = df.isnull().sum() / len(df)
+print("\nЧастка пропусків в кожній колонці:")
+print(missing_values_ratio)
+
+# Завдання 6: Видаліть всі стовпці з пропусками, окрім стовпця "Язык.программирования"
+columns_with_nan = df.columns[df.isnull().any()]
+columns_to_drop = columns_with_nan.difference(columns_to_keep)
+df.drop(columns_to_drop, axis=1, inplace=True)
+
+# Завдання 7: Знову порахуйте, яка частка пропусків міститься в кожній колонці
+missing_values_ratio_after_drop = df.isnull().sum() / len(df)
+print("\nЧастка пропусків в кожній колонці після видалення:")
+print(missing_values_ratio_after_drop)
+
+# Завдання 8: Видаліть всі рядки в початковій таблиці за допомогою методу dropna
+df.dropna(inplace=True)
+print("\nТаблиця після видалення рядків з пропусками:")
+print(df)
+
+# Завдання 9: Визначте новий розмір таблиці за допомогою методу shape
+new_shape = df.shape
+print("\nНовий розмір таблиці:", new_shape)
+
+# Завдання 10: Створіть нову таблицю python_data, в якій будуть лише рядки зі спеціалістами, що вказали мову програмування Python
+python_data = df[df['Язык.программирования'] == 'Python']
+
+# Завдання 11: Визначте розмір таблиці python_data за допомогою методу shape
+python_data_shape = python_data.shape
+print("\nРозмір таблиці python_data:", python_data_shape)
+
+# Завдання 12: Використовуючи метод groupby, групуйте дані по стовпцю "Должность"
+grouped_data = df.groupby('Должность')
+
+# Для виводу першого рядка кожної групи можна використати метод first()
+first_rows_of_groups = grouped_data.first()
+print("\nПерші рядки кожної групи по стовпцю 'Должность':")
+print(first_rows_of_groups)
+
+# Завдання 13: Створіть новий DataFrame, де для сгруппованих даних по стовпцю "Должность" виконайте агрегацію даних за допомогою методу agg і знайдіть мінімальне і максимальне значення в стовпці "Зарплата.в.месяц"
+aggregated_data = grouped_data['Зарплата.в.месяц'].agg(['min', 'max'])
+
+# Завдання 14: Створіть функцію fill_avg_salary, яка буде повертати середнє значення заробітної плати в місяць. Використовуйте її для методу apply і створіть новий стовпець "avg"
+def fill_avg_salary(group):
+    return group.mean()
+
+df['avg'] = grouped_data['Зарплата.в.месяц'].apply(fill_avg_salary)
+
+# Завдання 15: Створіть описову статистику за допомогою методу describe для нового стовпця
+avg_salary_stats = df['avg'].describe()
+print("\nОписова статистика для нового стовпця 'avg':")
+print(avg_salary_stats)
+
+# Завдання 16: Збережіть отриману таблицю в CSV файл
+df.to_csv('aggregated_data.csv', index=False, encoding='utf-8')
+print("\nТаблицю збережено в файлі 'aggregated_data.csv'")
